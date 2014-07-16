@@ -1,0 +1,10 @@
+{
+	"folders":
+	[
+		{
+			"path": "/Users/onewman/Desktop/Canopy Dev/Addons/canopy_addons/csv_drop",
+			 "folder_exclude_patterns": ["build", "dist", "*.egg-info"],
+			 "file_exclude_patterns": ["*.sublime-workspace", "*.sublime-project"]
+		}
+	]
+}

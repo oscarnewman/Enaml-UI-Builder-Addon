@@ -1,0 +1,3 @@
+[envisage.plugins]
+csv_drop = csv_drop_addon.csv_drop_plugin:CSVDropPlugin
+

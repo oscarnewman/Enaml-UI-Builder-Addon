@@ -1,0 +1,14 @@
+setup_csv_drop_addon.py
+csv_drop_addon/__init__.py
+csv_drop_addon/csv_drop_plugin.py
+csv_drop_addon/csv_editor.py
+csv_drop_addon/csv_editor_factory.py
+csv_drop_addon.egg-info/PKG-INFO
+csv_drop_addon.egg-info/SOURCES.txt
+csv_drop_addon.egg-info/dependency_links.txt
+csv_drop_addon.egg-info/entry_points.txt
+csv_drop_addon.egg-info/requires.txt
+csv_drop_addon.egg-info/top_level.txt
+csv_drop_addon/ui/__init__.py
+csv_drop_addon/ui/actions.py
+csv_drop_addon/ui/csv_options.py

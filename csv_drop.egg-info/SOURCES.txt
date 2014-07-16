@@ -1,0 +1,7 @@
+setup_csv_drop_addon.py
+csv_drop.egg-info/PKG-INFO
+csv_drop.egg-info/SOURCES.txt
+csv_drop.egg-info/dependency_links.txt
+csv_drop.egg-info/entry_points.txt
+csv_drop.egg-info/requires.txt
+csv_drop.egg-info/top_level.txt
