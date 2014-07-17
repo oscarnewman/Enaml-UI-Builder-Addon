@@ -1,12 +1,11 @@
+import traits_enaml
+from enaml.qt.qt_application import QtApplication
 from pyface.tasks.action.api import GroupSchema, MenuSchema, ActionSchema, \
     TaskAction
-from traits.api import Str, on_trait_change
-import traitsui
 from pyface.api import ConfirmationDialog, FileDialog, \
     YES, OK, CANCEL
 
-from csv_drop_addon.ui.csv_options import CSVOptions
-
+from csv_import_options import CSVImportOptions
 
 FILE_HANDLING_SERVICE = 'canopy.file_handling.i_file_handling_service.IFileHandlingService'
 
@@ -15,16 +14,27 @@ FILE_HANDLING_SERVICE = 'canopy.file_handling.i_file_handling_service.IFileHandl
 class OpenDataFileAction(TaskAction):
     """ Open a data file containing a table/array (ex: CSV). """
 
-    name = '&Load Pandas DataFrame...'
+    name = 'Import Table to UI Builder...'
     id = 'OpenDataFileAction'
-    tooltip = 'Load Pandas DataFrame...'
+    tooltip = 'Import Table to UI Builder...'
 
     def perform(self, event):
-
         dialog = FileDialog(wildcard='*.csv')
         if dialog.open() == OK:
-            optionWindow = CSVOptions(path=dialog.path)
-            optionWindow.configure_traits()
+
+            with traits_enaml.imports():
+                from csv_drop_addon.ui.csv_import_view import CSVImportView
+
+            opts = CSVImportOptions()
+            opts.path = dialog.path
+
+            app = QtApplication()
+
+            view = CSVImportView(options = opts)
+            view.show()
+
+            app.start()
+
 
         
 

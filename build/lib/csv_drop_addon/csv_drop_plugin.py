@@ -18,7 +18,7 @@ class CSVDropPlugin(Plugin):
     id = 'csv_drop'
 
     # User-readable name for this Plugin.
-    name = 'CSV Drop Plugin'
+    name = 'CSV Import Plugin'
 
     #### Contributions to extension points made by this plugin ################
 
@@ -49,19 +49,19 @@ class CSVDropPlugin(Plugin):
     # Editor Factor for drag/drop of CSV 
     # (Likely to be removed in favor of menu item)
 
-    editor_factories = List(contributes_to=EDITOR_FACTORIES)
+    # editor_factories = List(contributes_to=EDITOR_FACTORIES)
 
-    def _editor_factories_default(self):
-        from csv_drop_addon.csv_editor_factory import CSVEditorFactory
-        from csv_drop_addon.csv_editor import CSVEditor
+    # def _editor_factories_default(self):
+    #     from csv_drop_addon.csv_editor_factory import CSVEditorFactory
+    #     from csv_drop_addon.csv_editor import CSVEditor
 
-        fileTypeCSV = FileType()
-        fileTypeCSV.name = 'CSV'
-        fileTypeCSV.extensions = ['*.csv', '.csv']
+    #     fileTypeCSV = FileType()
+    #     fileTypeCSV.name = 'CSV'
+    #     fileTypeCSV.extensions = ['*.csv', '.csv']
 
-        file_types = [fileTypeCSV]
+    #     file_types = [fileTypeCSV]
 
-        factory = CSVEditorFactory(file_types=file_types,
-                                   schemes=['file', ''])
+    #     factory = CSVEditorFactory(file_types=file_types,
+    #                                schemes=['file', ''])
 
-        return [factory]
+    #     return [factory]

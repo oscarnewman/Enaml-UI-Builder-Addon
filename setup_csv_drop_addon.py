@@ -9,6 +9,10 @@ setup(
     description      = \
         "Allows for Canopy to open CSV files with the Enaml UI Builder",
 
+    package_data={
+        'csv_drop_addon': ['ui/*.enaml']
+    },
+
     # Requirements.
     install_requires = ['canopyapp_addon'],
 
@@ -16,8 +20,10 @@ setup(
     entry_points = {
         'envisage.plugins': [
             'csv_drop = csv_drop_addon.csv_drop_plugin:CSVDropPlugin',
-        ],
+        ]
     },
+
+    zip_safe = False,
 
     # Packaging.
     packages         = find_packages(),

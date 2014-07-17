@@ -7,8 +7,14 @@ csv_drop_addon.egg-info/PKG-INFO
 csv_drop_addon.egg-info/SOURCES.txt
 csv_drop_addon.egg-info/dependency_links.txt
 csv_drop_addon.egg-info/entry_points.txt
+csv_drop_addon.egg-info/not-zip-safe
 csv_drop_addon.egg-info/requires.txt
 csv_drop_addon.egg-info/top_level.txt
 csv_drop_addon/ui/__init__.py
 csv_drop_addon/ui/actions.py
+csv_drop_addon/ui/comments.py
+csv_drop_addon/ui/csv_import_options.py
+csv_drop_addon/ui/csv_import_view.enaml
 csv_drop_addon/ui/csv_options.py
+csv_drop_addon/ui/test.enaml
+csv_drop_addon/ui/test_import.py
