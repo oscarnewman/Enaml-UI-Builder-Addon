@@ -10,7 +10,9 @@ import pandas as pd
 from enaml_ui_builder import application
 from enaml_ui_builder.app.data_frame_plugin import DataFramePlugin
 
-class CSVImportOptions(HasTraits):
+from dataframe_import_options import DataFrameImportOptions
+
+class CSVImportOptions(DataFrameImportOptions):
     """Class to handle options for importing CSV and model for enaml view.
     """
 
@@ -26,58 +28,58 @@ class CSVImportOptions(HasTraits):
     # Delimiter selected by user
     delim = Str(',')
 
-    # Index of header row
-    header_row = Any(0)
+    # # Index of header row
+    # header_row = Any(0)
 
-    # Indexes of columns to use as index columns
-    index_column = Str('None')
+    # # Indexes of columns to use as index columns
+    # index_column = Str('None')
 
-    # Indexes entered as comma separated list
-    index_sequence = Str()
+    # # Indexes entered as comma separated list
+    # index_sequence = Str()
 
-    # Html to be used in preview of dataframe
-    html = HTML()
+    # # Html to be used in preview of dataframe
+    # html = HTML()
 
-    # Whether to parse dates
-    parse_dates = Bool(False)
+    # # Whether to parse dates
+    # parse_dates = Bool(False)
 
-    # Path to CSV file
-    path = Str()
+    # # Path to CSV file
+    # path = Str()
 
-    # DataFrame for CSV file
-    df = pd.DataFrame()
+    # # DataFrame for CSV file
+    # df = pd.DataFrame()
 
-    # CSS for dataframe html
-    style = Str("<style type='text/css'>html, body{margin: 0;padding:\
-                0;width:100%;}table{width:100%;height:100%;\
-                border-collapse:collapse;font-family: monospace;margin:\
-                0;border-collapse:collapse;\
-                }td{padding: 0 10px;background: #ffffff;}th{text-align:\
-                center;padding: 5px;background: #f7f7f7;}</style>")
+    # # CSS for dataframe html
+    # style = Str("<style type='text/css'>html, body{margin: 0;padding:\
+    #             0;width:100%;}table{width:100%;height:100%;\
+    #             border-collapse:collapse;font-family: monospace;margin:\
+    #             0;border-collapse:collapse;\
+    #             }td{padding: 0 10px;background: #ffffff;}th{text-align:\
+    #             center;padding: 5px;background: #f7f7f7;}</style>")
 
-    ## Detect Changes in Traits
+    # ## Detect Changes in Traits
 
-    def _path_changed(self):
-        self._update_datafame()
+    # def _path_changed(self):
+    #     self._update_dataframe()
 
     def _delim_changed(self):
-        self._update_datafame()
+        self._update_dataframe()
 
-    def _header_row_changed(self):
-        self._update_datafame()
+    # def _header_row_changed(self):
+    #     self._update_dataframe()
 
-    def _index_column_changed(self):
-        self._update_datafame()
+    # def _index_column_changed(self):
+    #     self._update_dataframe()
 
-    def _index_sequence_changed(self):
-        self._update_datafame()
+    # def _index_sequence_changed(self):
+    #     self._update_dataframe()
         
-    def _parse_dates_changed(self):
-        self._update_datafame()
+    # def _parse_dates_changed(self):
+    #     self._update_dataframe()
 
-    ## Logic for Dataframes and preview
+    # ## Logic for Dataframes and preview
 
-    def _update_datafame(self):
+    def _update_dataframe(self):
         try:
             self.df = pd.read_csv(self.path, 
                                  sep=self.delim,
@@ -89,41 +91,41 @@ class CSVImportOptions(HasTraits):
         except:
             self._update_html_parse_error()
 
-    def _update_html(self):
-        self.html = (self.style + self.df.to_html(max_rows=5)).encode('ascii', 'xmlcharrefreplace')
+    # def _update_html(self):
+    #     self.html = (self.style + self.df.to_html(max_rows=5)).encode('ascii', 'xmlcharrefreplace')
 
-    def _update_html_parse_error(self):
-        error = "<style type='text/css'>*{background:#ffffff;color:red;\
-                font-family:monospace;}p{width: 250px; margin: 0 auto;\
-                text-align: center;}\
-                </style><p>Data could not be parsed.</p>"
-        self.html = error
+    # def _update_html_parse_error(self):
+    #     error = "<style type='text/css'>*{background:#ffffff;color:red;\
+    #             font-family:monospace;}p{width: 250px; margin: 0 auto;\
+    #             text-align: center;}\
+    #             </style><p>Data could not be parsed.</p>"
+    #     self.html = error
 
-    def _get_current_index_col(self):
-        """Returns index_column converted from string into appropriate datatype
-        """
-        if self.index_column == 'Multi-Index':
-            sequence_array = filter(None, re.compile(r'\d*').findall(self.index_sequence))
-            if(len(sequence_array) == 0):
-                return None
-            else:
-                return map(int, sequence_array)
-        elif self.index_column == 'None':
-            return None
-        else:
-            return int(self.index_column)
+    # def _get_current_index_col(self):
+    #     """Returns index_column converted from string into appropriate datatype
+    #     """
+    #     if self.index_column == 'Multi-Index':
+    #         sequence_array = filter(None, re.compile(r'\d*').findall(self.index_sequence))
+    #         if(len(sequence_array) == 0):
+    #             return None
+    #         else:
+    #             return map(int, sequence_array)
+    #     elif self.index_column == 'None':
+    #         return None
+    #     else:
+    #         return int(self.index_column)
 
-    ## Method called when OK is pressed
-    def ok_pressed(self):
-        with traits_enaml.imports():
-            from misc_views import DialogPopup
+    # ## Method called when OK is pressed
+    # def ok_pressed(self):
+    #     with traits_enaml.imports():
+    #         from misc_views import DialogPopup
 
-        dialog = DialogPopup()
+    #     dialog = DialogPopup()
 
-        dialog.show()
+    #     dialog.show()
 
-        app = application()
-        app.add_plugin(DataFramePlugin(data_frame=self.df))
-        app.start()
+    #     app = application()
+    #     app.add_plugin(DataFramePlugin(data_frame=self.df))
+    #     app.start()
 
-        dialog.close()
+    #     dialog.close()

@@ -46,32 +46,33 @@ class DataFrameImportOptions(HasTraits):
     ## Detect Changes in Traits
 
     def _path_changed(self):
-        self._update_datafame()
+        self._update_dataframe()
 
     def _header_row_changed(self):
-        self._update_datafame()
+        self._update_dataframe()
 
     def _index_column_changed(self):
-        self._update_datafame()
+        self._update_dataframe()
 
     def _index_sequence_changed(self):
-        self._update_datafame()
+        self._update_dataframe()
         
     def _parse_dates_changed(self):
-        self._update_datafame()
+        self._update_dataframe()
 
     ## Logic for Dataframes and preview
 
-    def _update_datafame(self):
-        try:
-            self.df = pd.read_csv(self.path, 
-                                 header=self.header_row,
-                                 parse_dates=self.parse_dates,
-                                 index_col=self._get_current_index_col(),
-                                 encoding='utf-8')
-            self._update_html()
-        except:
-            self._update_html_parse_error()
+    def _update_dataframe(self):
+        # try:
+        #     self.df = pd.read_csv(self.path, 
+        #                          header=self.header_row,
+        #                          parse_dates=self.parse_dates,
+        #                          index_col=self._get_current_index_col(),
+        #                          encoding='utf-8')
+        #     self._update_html()
+        # except:
+        #     self._update_html_parse_error()
+        raise NotImplementedError()
 
     def _update_html(self):
         self.html = (self.style + self.df.to_html(max_rows=5)).encode('ascii', 'xmlcharrefreplace')

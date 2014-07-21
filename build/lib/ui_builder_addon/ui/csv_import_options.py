@@ -58,26 +58,26 @@ class CSVImportOptions(HasTraits):
     ## Detect Changes in Traits
 
     def _path_changed(self):
-        self._update_datafame()
+        self._update_dataframe()
 
     def _delim_changed(self):
-        self._update_datafame()
+        self._update_dataframe()
 
     def _header_row_changed(self):
-        self._update_datafame()
+        self._update_dataframe()
 
     def _index_column_changed(self):
-        self._update_datafame()
+        self._update_dataframe()
 
     def _index_sequence_changed(self):
-        self._update_datafame()
+        self._update_dataframe()
         
     def _parse_dates_changed(self):
-        self._update_datafame()
+        self._update_dataframe()
 
     ## Logic for Dataframes and preview
 
-    def _update_datafame(self):
+    def _update_dataframe(self):
         try:
             self.df = pd.read_csv(self.path, 
                                  sep=self.delim,

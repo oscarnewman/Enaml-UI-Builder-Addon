@@ -40,7 +40,7 @@ class OpenTableAction(TaskAction):
     """
 
     file_types = {
-        'All files' : '*'
+        'All files (*)' : '*'
     }
 
     file_type_name = "File"
@@ -130,7 +130,7 @@ class OpenExcelAction(OpenTableAction):
 
     file_type_name = "Excel"
     file_types = {
-        'Excel Files (*.xls, *.xlsx)' : '*.xls,*.xlsx',
+        'Excel Files (*.xls)' : '*.xls',
     }
 
     name = 'Import DataFrame From Excel File...'

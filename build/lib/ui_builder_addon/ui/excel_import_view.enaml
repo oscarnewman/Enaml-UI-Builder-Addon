@@ -26,8 +26,8 @@ enamldef ExcelImportView(Window): windw:
 				constraints = [
 					hbox(
 						vbox(
-							widths_lbl,
-							widths,
+							sheet_lbl,
+							sheet,
 							spacer
 						), 
 						spacer(200).flex(),
@@ -54,8 +54,8 @@ enamldef ExcelImportView(Window): windw:
 				Label: sheet_lbl:
 					text = 'Sheet:'
 				ObjectCombo: sheet:
-					items = ['sheet1', 'sheet2']
-					selected := object.sheet
+					items << options.sheets
+					selected := options.sheet
 				Label: header_row_lbl:
 					text = "Header Row"
 				IntField: header_row:

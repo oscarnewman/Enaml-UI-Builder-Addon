@@ -63,24 +63,25 @@ class DataFrameImportOptions(HasTraits):
     ## Logic for Dataframes and preview
 
     def _update_datafame(self):
-        try:
-            self.df = pd.read_csv(self.path, 
-                                 header=self.header_row,
-                                 parse_dates=self.parse_dates,
-                                 index_col=self._get_current_index_col(),
-                                 encoding='utf-8')
-            self._update_html()
-        except:
-            self._update_html_parse_error()
+        # try:
+        #     self.df = pd.read_csv(self.path, 
+        #                          header=self.header_row,
+        #                          parse_dates=self.parse_dates,
+        #                          index_col=self._get_current_index_col(),
+        #                          encoding='utf-8')
+        #     self._update_html()
+        # except:
+        #     self._update_html_parse_error()
+        raise NotImplementedError()
 
     def _update_html(self):
         self.html = (self.style + self.df.to_html(max_rows=5)).encode('ascii', 'xmlcharrefreplace')
 
-    def _update_html_parse_error(self):
+    def _update_html_parse_error(self, error=""):
         error = "<style type='text/css'>*{background:#ffffff;color:red;\
                 font-family:monospace;}p{width: 250px; margin: 0 auto;\
                 text-align: center;}\
-                </style><p>Data could not be parsed.</p>"
+                </style><p>Data could not be parsed.</p><p>"+error+"</p>"
         self.html = error
 
     def _get_current_index_col(self):
