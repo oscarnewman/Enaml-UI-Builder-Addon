@@ -1,0 +1,111 @@
+from enaml.widgets.api import (
+	Window, Container, Form, Label, Field, GroupBox, ObjectCombo, CheckBox, 
+	WebView, PushButton, Dialog
+)
+from enaml.stdlib.fields import IntField
+from enaml.layout.api import vbox, hbox, spacer, grid, align
+
+enamldef CSVImportView(Window): windw:
+	attr options
+	Container:
+		constraints = [
+			vbox(
+				opts,
+				html,
+				hbox(
+					spacer,
+					cancelButton,
+					loadButton
+				)
+			),
+			html.height == 300 
+		]
+		GroupBox: opts:
+			title = 'Import Options'
+			Container:
+				constraints = [
+					hbox(
+						vbox(
+							delims_lbl,
+							delims,
+							delim_other,
+							spacer
+						), 
+						spacer(200).flex(),
+						vbox(
+							header_row_lbl,
+							header_row,
+							has_header_row_cb,
+							spacer
+						), 
+						spacer(200).flex(),
+						vbox(
+							index_cols_lbl,
+							index_cols,
+							multi_index_cols,
+							dates,
+							spacer
+						)
+					),
+
+					delims_lbl.width == delims.width,
+					header_row_lbl.width == header_row.width,
+					has_header_row_cb.width == header_row.width,
+					index_cols_lbl.width == index_cols.width,
+				]
+				Label: delims_lbl:
+					text = 'Delimiter'
+				ObjectCombo: delims:
+					items = options.delims_keys
+					selected = 'comma'
+					selected ::
+						if selected == 'custom':
+							options.delim = delim_other.text
+						else:
+							options.delim = options.delims_dict[selected]
+				Field: delim_other:
+					visible << delims.selected == 'custom'
+					text >> options.delim
+					submit_triggers = ['auto_sync', 'lost_focus', 'return_pressed']
+				Label: header_row_lbl:
+					text = "Header Row"
+				IntField: header_row:
+					enabled << has_header_row_cb.checked
+					value >> (options.header_row)
+					submit_triggers = ['auto_sync', 'lost_focus', 'return_pressed']
+					minimum = 0
+					maximum << options.df.shape[0]
+				CheckBox: has_header_row_cb:
+					text = "Has Header Row"
+					checked = True
+					toggled ::
+						if not has_header_row_cb.checked:
+							options.header_row = None
+						else:
+							options.header_row = header_row.value
+				Label: index_cols_lbl:
+					text = "Index Column(s)"
+				ObjectCombo: index_cols:
+					items = ["None"] + map(str, range(options.df.shape[1])) + ["Multi-Index"]
+					selected := options.index_column
+				Field: multi_index_cols:
+					visible << index_cols.selected == 'Multi-Index'
+					placeholder = "Comma Separated"	
+					text := options.index_sequence			
+					submit_triggers = ['auto_sync', 'lost_focus', 'return_pressed']	
+				CheckBox: dates:
+					text = "Parse Index Columns as Dates"
+					checked := options.parse_dates	
+		WebView: html:
+			html << options.html
+		PushButton: cancelButton:
+			text = "Cancel"
+			clicked :: 
+				windw.close()
+		PushButton: loadButton:
+			text = "Load in UI Builder"
+			default = True
+			clicked :: 
+				windw.hide()
+				options.ok_pressed()
+

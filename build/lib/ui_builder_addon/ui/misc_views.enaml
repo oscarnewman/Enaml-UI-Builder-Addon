@@ -1,0 +1,11 @@
+from enaml.widgets.api import Window, Container, Label
+
+
+enamldef DialogPopup(Window): dlg_win:
+    title = 'Loading'
+
+    Container:
+        constraints = []
+
+        Label:
+        	text = "Loading Enaml UI Builder..."
