@@ -35,3 +35,4 @@ class FWFImportOptions(DataFrameImportOptions):
             return None
         else:
             return map(int, sequence_array)
+            
