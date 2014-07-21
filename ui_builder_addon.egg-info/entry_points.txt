@@ -1,3 +1,0 @@
-[envisage.plugins]
-builder_addon = ui_builder_addon.plugin:UIBuilderPlugin
-
