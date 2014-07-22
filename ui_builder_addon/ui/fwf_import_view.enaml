@@ -1,6 +1,6 @@
 from enaml.widgets.api import (
 	Window, Container, Form, Label, Field, GroupBox, ObjectCombo, CheckBox, 
-	WebView, PushButton
+	WebView, PushButton, Html, Slider
 )
 from enaml.stdlib.fields import IntField
 from enaml.layout.api import vbox, hbox, spacer, grid, align
@@ -11,6 +11,8 @@ enamldef FWFImportView(Window): windw:
 		constraints = [
 			vbox(
 				opts,
+				#slider,
+				#plain_text,
 				html,
 				hbox(
 					spacer,
@@ -86,6 +88,10 @@ enamldef FWFImportView(Window): windw:
 				CheckBox: dates:
 					text = "Parse Index Columns as Dates"
 					checked := options.parse_dates	
+		#Slider: slider:
+		#	pass
+		#Html: plain_text:
+		#	source := options.plain_text
 		WebView: html:
 			html << options.html
 		PushButton: cancelButton:

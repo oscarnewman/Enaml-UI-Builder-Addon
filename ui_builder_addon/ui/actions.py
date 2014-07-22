@@ -62,6 +62,7 @@ class OpenTableAction(TaskAction):
 
             opts = self._get_model()
             opts.path = dialog.path
+            opts.application = app
 
             application_manager.create_app()
 
@@ -91,7 +92,7 @@ class OpenCSVAction(OpenTableAction):
         'CSV Files (*.csv)': '*.csv',
     }
 
-    name = 'Import DataFrame From CSV...'
+    name = 'CSV'
     tooltip = name
     id = 'OpenCSVAction'
 
@@ -112,7 +113,7 @@ class OpenFWFAction(OpenTableAction):
         'All files (*)' : '*',
     }
 
-    name = 'Import DataFrame From Fixed Width File...'
+    name = 'Fixed Width File'
     tooltip = name
     id = 'OpenFWFAction'
 
@@ -133,7 +134,7 @@ class OpenExcelAction(OpenTableAction):
         'Excel Files (*.xls)' : '*.xls',
     }
 
-    name = 'Import DataFrame From Excel File...'
+    name = 'Excel'
     tooltip = name
     id = 'OpenExcelAction'
 
@@ -147,18 +148,21 @@ class OpenExcelAction(OpenTableAction):
         return ExcelImportOptions()
 
 menu_group_schema = MenuSchema(
-    ActionSchema(
-        action_factory=OpenCSVAction,
-        id='OpenCSVAction'
+    MenuSchema(
+        ActionSchema(
+            action_factory=OpenCSVAction,
+            id='OpenCSVAction'
+        ),
+        ActionSchema(
+            action_factory=OpenFWFAction,
+            id='OpenFWFAction'
+        ),
+        ActionSchema(
+            action_factory=OpenExcelAction,
+            id='OpenExcelAction'
+        ),
+        name = "Impot DataFrame from..."
     ),
-    ActionSchema(
-        action_factory=OpenFWFAction,
-        id='OpenFWFAction'
-    ),
-    ActionSchema(
-        action_factory=OpenExcelAction,
-        id='OpenExcelAction'
-    ),
-    id='CreateCSVGroup',
+    id='UIBuilderGroup',
     name='Enaml UI Builder'
 )

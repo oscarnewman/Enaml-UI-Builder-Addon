@@ -4,7 +4,7 @@ import enaml
 import traits_enaml
 from enaml.qt.qt_application import QtApplication
 from traits.api import (
-    HasTraits, Str, HTML, List, Int, Bool, Dict, Any, on_trait_change
+    HasTraits, Str, HTML, List, Int, Bool, Dict, Any, Instance
 )
 import pandas as pd
 from enaml_ui_builder import application
@@ -42,6 +42,8 @@ class DataFrameImportOptions(HasTraits):
                 0;border-collapse:collapse;\
                 }td{padding: 0 10px;background: #ffffff;}th{text-align:\
                 center;padding: 5px;background: #f7f7f7;}</style>")
+
+    application = Instance('envisage.api.IApplication')
 
     ## Detect Changes in Traits
 
@@ -100,6 +102,31 @@ class DataFrameImportOptions(HasTraits):
 
     ## Method called when OK is pressed
     def ok_pressed(self):
+
+        code = """
+        import pandas as pd
+        df =  pd.read_json('""" + self.df.to_json() + """')
+        def _view(dataframe):
+            import traits_enaml
+            with traits_enaml.imports():
+                from misc_views import DialogPopup
+            print 'Launching Enaml UI Builder...'
+            app = application()
+            app.add_plugin(DataFramePlugin(data_frame=dataframe))
+            app.start()
+
+        """
+        code_task = self.application.get_task('canopy.integrated_code_editor')
+
+        # Make the python pane visible, if it is not
+        if not code_task.python_pane.visible:
+            code_task.python_pane.visible = True
+
+        # Run the code in the frontend
+        code_task.python_pane.frontend.execute_command(code)
+
+        ## Launch UI Builder
+
         with traits_enaml.imports():
             from misc_views import DialogPopup
 
@@ -112,3 +139,5 @@ class DataFrameImportOptions(HasTraits):
         app.start()
 
         dialog.close()
+
+        
