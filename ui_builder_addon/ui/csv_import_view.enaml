@@ -11,6 +11,7 @@ enamldef CSVImportView(Window): windw:
 		constraints = [
 			vbox(
 				opts,
+				col_opts,
 				html,
 				hbox(
 					spacer,
@@ -21,7 +22,7 @@ enamldef CSVImportView(Window): windw:
 			html.height == 300 
 		]
 		GroupBox: opts:
-			title = 'Import Options'
+			title = 'Global Options'
 			Container:
 				constraints = [
 					hbox(
@@ -95,7 +96,30 @@ enamldef CSVImportView(Window): windw:
 					submit_triggers = ['auto_sync', 'lost_focus', 'return_pressed']	
 				CheckBox: dates:
 					text = "Parse Index Columns as Dates"
-					checked := options.parse_dates	
+					checked := options.parse_dates
+		GroupBox: col_opts:
+			title = 'Column Options'
+			Label:
+				text = "Column"
+			ObjectCombo: cols:
+				items =  list(options.df.columns.values)
+				selected = list(options.df.columns.values)[0]
+				selected >> options.selected_column
+			#CheckBox:
+			#	text = 'Ignore This Column'
+			#	checked = False
+			Label: lbl:
+				text = 'Data Type'
+			Label: error:
+				text := options.transfer_error
+				visible << options.transfer_error is not ''
+			ObjectCombo:
+				items = options.default_dtypes.values() + options.transfer_functions.keys()
+				selected << str(options.selected_transfer_functions[cols.selected]) if cols.selected in options.selected_transfer_functions else options.default_dtypes[type(options.df[cols.selected][0])]
+				selected ::
+					options.selected_transfer_functions[cols.selected] = selected #if selected is not options.default_dtypes[type(options.df[cols.selected][0])] else None
+					options._selected_transfer_functions_changed()
+
 		WebView: html:
 			html << options.html
 		PushButton: cancelButton:

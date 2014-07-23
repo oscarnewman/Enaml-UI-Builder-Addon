@@ -161,7 +161,7 @@ menu_group_schema = MenuSchema(
             action_factory=OpenExcelAction,
             id='OpenExcelAction'
         ),
-        name = "Impot DataFrame from..."
+        name = "Import DataFrame from..."
     ),
     id='UIBuilderGroup',
     name='Enaml UI Builder'
