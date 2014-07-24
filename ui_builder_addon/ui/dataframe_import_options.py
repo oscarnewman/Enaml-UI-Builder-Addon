@@ -6,21 +6,23 @@ import enaml
 import traits_enaml
 from enaml.qt.qt_application import QtApplication
 from traits.api import (
-    HasTraits, Str, HTML, List, Int, Bool, Dict, Any, Instance
+    HasTraits, Str, HTML, List, Int, Bool, Dict, Any, Instance, Either
 )
 import pandas as pd
 from enaml_ui_builder import application
 from enaml_ui_builder.app.data_frame_plugin import DataFramePlugin
 import numpy as np
 
+from ui_builder_addon import default_transfers
+from ui_builder_addon.transfer_handler import TransferHandler
 
 class DataFrameImportOptions(HasTraits):
     """Class to handle options for importing CSV and model for enaml view.
     """
 
-    def __init__(self):
+    # def __init__(self):
         # Execute Transfer Functions file if exists.
-        self._load_transfer_functions()
+        # self._load_transfer_functions()
 
 
     # Index of header row
@@ -58,6 +60,8 @@ class DataFrameImportOptions(HasTraits):
     # Application instance used to acces python frontend
     application = Instance('envisage.api.IApplication') 
 
+    transfer_handler = TransferHandler(df)
+
     # Detect Changes in Traits
     transfer_functions = Dict()
 
@@ -72,16 +76,15 @@ class DataFrameImportOptions(HasTraits):
 
     # Default datatypes to present to user
     default_dtypes = Dict({
-        np.int64    : 'Int',
-        np.bool_    : 'Bool',
-        np.float64  : 'Float',
-        str         : 'String',
-        unicode     : 'Unicode'
+        np.int64                        : 'Int',
+        np.bool_                        : 'Bool',
+        np.float64                      : 'Float',
+        str                             : 'String',
+        default_transfers.to_unicode    : 'Unicode'
     })
 
-
     # Error output by transfer
-    transfer_error = Str()
+    last_error = Any(None)
 
 
     def _path_changed(self):
@@ -108,8 +111,12 @@ class DataFrameImportOptions(HasTraits):
     ## Logic for Dataframes and preview
 
     def _update_dataframe(self):
-        self.df_trans = self.df.copy()
-        self._apply_transfers()
+        # self.df_trans = self.df.copy()
+        # self._apply_transfers()
+        self.transfer_handler.update_dataframe(self.df)
+        self.df_trans = self.transfer_handler.apply_transfers()
+        if self.selected_column in list(self.df.columns.values):
+            self.last_error = self.transfer_handler.errors[self.selected_column]
 
     def _update_html(self):
         self.html = (self.style + self.df_trans.to_html(max_rows=5)).encode('ascii', 'xmlcharrefreplace')
@@ -136,37 +143,38 @@ class DataFrameImportOptions(HasTraits):
             return int(self.index_column)
 
 
-    def _load_transfer_functions(self):
-        """ Load transfer functions into dictionary from python file or create
-            transfer function file if it doesn't already exist.
-        """
-        # Create file if it doesn't exist
-        file = open(self.transfer_functions_path, 'a+')
+    # def _load_transfer_functions(self):
+    #     """ Load transfer functions into dictionary from python file or create
+    #         transfer function file if it doesn't already exist.
+    #     """
+    #     # Create file if it doesn't exist
+    #     file = open(self.transfer_functions_path, 'a+')
 
-        # Execute file and store local namespace to self.transfer_functions
-        execfile(self.transfer_functions_path, {}, self.transfer_functions)
+    #     # Execute file and store local namespace to self.transfer_functions
+    #     execfile(self.transfer_functions_path, {}, self.transfer_functions)
 
-    def _map_to_col(self, col, func):
-        self.df_trans[col] = map(func, self.df[col])
+    # def _map_to_col(self, col, func):
+    #     self.df_trans[col] = map(func, self.df[col])
 
-    def _apply_transfers(self):
-        for col in self.selected_transfer_functions.keys():
-            func = self.selected_transfer_functions[col]
-            if func is not 'None' and func is not None:
-                try:
-                    if func not in self.default_dtypes.values():
-                        self.df_trans[col] = map(self.transfer_functions[self.selected_transfer_functions[col]], self.df[col])
-                    else:
-                        self.df_trans[col] = self.df[col].astype(self._type_for_string(func))
-                    self.transfer_error = ""
-                except Exception, e:
-                    self.transfer_error = str(np.random.randint(30)) + str(traceback.format_exc())
+    # def _apply_transfers(self):
+    #     for col in self.selected_transfer_functions.keys():
+    #         func = self.selected_transfer_functions[col]
+    #         if func is not 'None' and func is not None:
+    #             try:
+    #                 if func not in self.default_dtypes.values():
+    #                     self.df_trans[col] = map(self.transfer_functions[self.selected_transfer_functions[col]], self.df[col])
+    #                 else:
+    #                     # self.df_trans[col] = self.df[col].astype(self._type_for_string(func))
+    #                     self.df_trans[col] = map(self._type_for_string(func), self.df[col])
+    #                 self.last_error = ""
+    #             except Exception, e:
+    #                 self.last_error = str(np.random.randint(30)) + str(traceback.format_exc())
 
 
-    def _type_for_string(self, typestr):
-        for key, val in self.default_dtypes.iteritems():
-            if val == typestr:
-                return key
+    # def _type_for_string(self, typestr):
+    #     for key, val in self.default_dtypes.iteritems():
+    #         if val == typestr:
+    #             return key
 
     ## Method called when OK is pressed
     def ok_pressed(self):
@@ -207,5 +215,3 @@ class DataFrameImportOptions(HasTraits):
         # app.start()
 
         # dialog.close()
-
-        

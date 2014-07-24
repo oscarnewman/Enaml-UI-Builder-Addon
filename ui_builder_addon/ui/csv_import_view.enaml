@@ -4,6 +4,9 @@ from enaml.widgets.api import (
 )
 from enaml.stdlib.fields import IntField
 from enaml.layout.api import vbox, hbox, spacer, grid, align
+from traits_enaml.widgets.data_frame_table import DataFrameTable
+
+import logging
 
 enamldef CSVImportView(Window): windw:
 	attr options
@@ -104,24 +107,36 @@ enamldef CSVImportView(Window): windw:
 			ObjectCombo: cols:
 				items =  list(options.df.columns.values)
 				selected = list(options.df.columns.values)[0]
-				selected >> options.selected_column
+				selected ::
+					options.selected_column = selected
 			#CheckBox:
 			#	text = 'Ignore This Column'
 			#	checked = False
 			Label: lbl:
 				text = 'Data Type'
 			Label: error:
-				text := options.transfer_error
-				visible << options.transfer_error is not ''
+				text := str(options.last_error)
+				visible << options.last_error is not None
 			ObjectCombo:
-				items = options.default_dtypes.values() + options.transfer_functions.keys()
-				selected << str(options.selected_transfer_functions[cols.selected]) if cols.selected in options.selected_transfer_functions else options.default_dtypes[type(options.df[cols.selected][0])]
+				# items = options.default_dtypes.values() + options.transfer_functions.keys()
+				#selected << str(options.selected_transfer_functions[cols.selected]) if cols.selected in options.selected_transfer_functions else options.default_dtypes[type(options.df[cols.selected][0])]
+
+				items << options.transfer_handler.get_list_options_for_column(cols.selected)
+				selected << options.transfer_handler.transfer_for_col(cols.selected)
 				selected ::
-					options.selected_transfer_functions[cols.selected] = selected #if selected is not options.default_dtypes[type(options.df[cols.selected][0])] else None
-					options._selected_transfer_functions_changed()
+					logging.info("SELECTED DROPDOWN: " + selected)
+					# options.selected_transfer_functions[cols.selected] = selected
+					options.selected_column = cols.selected
+					options.transfer_handler.set_col_transfer(cols.selected, selected)
+					options._update_dataframe()
+				#selected ::
+				#	options.selected_transfer_functions[cols.selected] = selected #if selected is not options.default_dtypes[type(options.df[cols.selected][0])] else None
+				#	options._selected_transfer_functions_changed()
 
 		WebView: html:
 			html << options.html
+		#DataFrameTable: html:
+		#	data_frame << options.df_trans
 		PushButton: cancelButton:
 			text = "Cancel"
 			clicked :: 
