@@ -8,31 +8,8 @@ from pyface.action.api import Action
 from pyface.api import ConfirmationDialog, FileDialog, \
     YES, OK, CANCEL
 from canopy.file_handling.i_file_handling_service import IFileHandlingService
-from enaml_ui_builder import run
 
 import application_manager
-
-
-def create_activate_task_action_factory(task_id, name, image=None):
-
-    def activate_task_action_factory(**traits):
-        """ Create an action that activates a task. """
-
-        def perform():
-            # the app itself will be launched in its original location
-            # (not the egg)
-            with traits_enaml.imports():
-                from misc_views import DialogPopup
-            application_manager.create_app()
-            dialog = DialogPopup()
-            dialog.show()
-            run()
-            dialog.close()
-
-        return Action(on_perform=perform, name=name, image=image)
-
-    return activate_task_action_factory
-
 
 class OpenTableAction(TaskAction):
 
@@ -89,7 +66,7 @@ class OpenCSVAction(OpenTableAction):
 
     file_type_name = "CSV"
     file_types = {
-        'CSV Files (*.csv)': '*.csv',
+        'All Files(*)': '*',
     }
 
     name = 'CSV'
@@ -147,22 +124,10 @@ class OpenExcelAction(OpenTableAction):
         from excel_import_options import ExcelImportOptions
         return ExcelImportOptions()
 
-menu_group_schema = MenuSchema(
-    MenuSchema(
-        ActionSchema(
-            action_factory=OpenCSVAction,
-            id='OpenCSVAction'
-        ),
-        ActionSchema(
-            action_factory=OpenFWFAction,
-            id='OpenFWFAction'
-        ),
-        ActionSchema(
-            action_factory=OpenExcelAction,
-            id='OpenExcelAction'
-        ),
-        name = "Import DataFrame from..."
-    ),
-    id='UIBuilderGroup',
-    name='Enaml UI Builder'
+
+
+menu_group_schema = ActionSchema(
+    action_factory=OpenCSVAction,
+    id='OpenCSVAction',
+    name = 'Import Dataframe...'
 )

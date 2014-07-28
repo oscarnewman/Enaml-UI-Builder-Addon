@@ -1,7 +1,7 @@
 import os
 import logging
 import sys
-import traceback
+import math
 
 import pandas as pd
 import numpy as np
@@ -52,7 +52,8 @@ class TransferHandler():
         execfile(self.user_transfers_path, {}, self.user_transfer_functions)
 
         self.default_transfer_functions = {
-            'Int' : int,
+            'Int' : \
+                lambda x: None if isinstance(x, float) and math.isnan(x) else int(x),
             'Float' : float,
             'String' : str,
             'Unicode (from utf-8)' : \
@@ -67,6 +68,19 @@ class TransferHandler():
             'Unicode (from utf-8)' : 'unicode',
             'Boolean' : 'boolean'
         }
+
+    def reload_transfers(self):
+        """ Reload transfer functions into dictionary from python file or 
+            create transfer function file if it doesn't already exist.
+        """
+        # Create file if it doesn't exist
+        file = open(self.user_transfers_path, 'a+')
+
+        # Reset Dictionary to remove old functions
+        self.user_transfer_functions = {}
+
+        # Execute file and store local namespace to self.transfer_functions
+        execfile(self.user_transfers_path, {}, self.user_transfer_functions)
 
     def _load_column_dtypes(self):
 
@@ -131,7 +145,11 @@ class TransferHandler():
             self.errors[col] = None
         except Exception as e:
             logging.error(e)
-            self.errors[col] = 'Error: ' + str(np.random.randint(100)) + ' ' + str(e).encode('latin1')
+            if func is float:
+                msg = "Float error reporting is borked, but there's definitely an error here."
+            else:
+                msg = str(e)
+            self.errors[col] = msg
             #self.errors[col] = traceback.format_exc()
             # self.errors[col] = str(np.random.randint(30)) + ": Sorry, this function could not be applied."
             # self.errors[col] = str(sys.exc_info()[1])

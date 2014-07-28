@@ -12,18 +12,13 @@ import pandas as pd
 from enaml_ui_builder import application
 from enaml_ui_builder.app.data_frame_plugin import DataFramePlugin
 import numpy as np
+from canopy.file_handling.i_file_handling_service import IFileHandlingService
 
-from ui_builder_addon import default_transfers
-from ui_builder_addon.transfer_handler import TransferHandler
+from import_addon.transfer_handler import TransferHandler
 
 class DataFrameImportOptions(HasTraits):
     """Class to handle options for importing CSV and model for enaml view.
     """
-
-    # def __init__(self):
-        # Execute Transfer Functions file if exists.
-        # self._load_transfer_functions()
-
 
     # Index of header row
     header_row = Any(0)
@@ -44,10 +39,10 @@ class DataFrameImportOptions(HasTraits):
     path = Str()
 
     # DataFrame for CSV file
-    df = pd.DataFrame()
+    df = Instance(pd.DataFrame)
 
     # DF after transfers applied
-    df_trans = pd.DataFrame()
+    df_trans = Instance(pd.DataFrame)
 
     # CSS for dataframe html
     style = Str("<style type='text/css'>html, body{margin: 0;padding:\
@@ -60,32 +55,32 @@ class DataFrameImportOptions(HasTraits):
     # Application instance used to acces python frontend
     application = Instance('envisage.api.IApplication') 
 
-    transfer_handler = TransferHandler(df)
-
-    # Detect Changes in Traits
-    transfer_functions = Dict()
-
-    # path of transfer functions file
-    transfer_functions_path = os.path.expanduser("~") + '/.canopy/transfers.py'
-
-    # transfer function selected by the user
-    selected_transfer_functions = Dict()
+    transfer_handler = Instance(TransferHandler)
 
     # Currently selected dataframe column
-    selected_column = Str()
-
-    # Default datatypes to present to user
-    default_dtypes = Dict({
-        np.int64                        : 'Int',
-        np.bool_                        : 'Bool',
-        np.float64                      : 'Float',
-        str                             : 'String',
-        default_transfers.to_unicode    : 'Unicode'
-    })
+    selected_column = Any()
 
     # Error output by transfer
     last_error = Any(None)
 
+    # Plain text of file
+    plain_text = Str()
+
+    # whether the parser failed
+    parse_error = Bool(False)
+
+    ## Defaults
+
+    def _df_default(self):
+        return pd.DataFrame()
+
+    def _df_trans_default(self):
+        return self.df.copy()
+
+    def _transfer_handler_default(self):
+        return TransferHandler(self.df)
+
+    # Monitor for changes
 
     def _path_changed(self):
         self._update_dataframe()
@@ -102,21 +97,28 @@ class DataFrameImportOptions(HasTraits):
     def _parse_dates_changed(self):
         self._update_dataframe()
 
-    def _selected_transfer_functions_changed(self):
-        self._update_dataframe()
-
     def _selected_column_changed(self):
         self._update_dataframe()
 
     ## Logic for Dataframes and preview
 
     def _update_dataframe(self):
-        # self.df_trans = self.df.copy()
-        # self._apply_transfers()
+        try:
+            self._read_dataframe()
+            self._update_html()
+            self.parse_error = False
+        except: 
+            self.parse_error = True
+
+        self.plain_text = open(self.path, 'r').read()
         self.transfer_handler.update_dataframe(self.df)
         self.df_trans = self.transfer_handler.apply_transfers()
         if self.selected_column in list(self.df.columns.values):
             self.last_error = self.transfer_handler.errors[self.selected_column]
+        
+
+    def _read_dataframe(self):
+        raise NotImplementedError()
 
     def _update_html(self):
         self.html = (self.style + self.df_trans.to_html(max_rows=5)).encode('ascii', 'xmlcharrefreplace')
@@ -142,56 +144,27 @@ class DataFrameImportOptions(HasTraits):
         else:
             return int(self.index_column)
 
+    def open_transfers_file(self):
+        """ Opens the transfer functions file in canopy.
+        """
+        file = open(self.transfer_handler.user_transfers_path, 'a+')
+        service = self.application.get_service(IFileHandlingService)
+        service.open_file(self.transfer_handler.user_transfers_path)
 
-    # def _load_transfer_functions(self):
-    #     """ Load transfer functions into dictionary from python file or create
-    #         transfer function file if it doesn't already exist.
-    #     """
-    #     # Create file if it doesn't exist
-    #     file = open(self.transfer_functions_path, 'a+')
+    def reload_transfers(self):
+        """ Prompts transfer handler to reload tranfer functions and updates
+            table
+        """
+        self.transfer_handler.reload_transfers()
+        self._update_dataframe()
 
-    #     # Execute file and store local namespace to self.transfer_functions
-    #     execfile(self.transfer_functions_path, {}, self.transfer_functions)
-
-    # def _map_to_col(self, col, func):
-    #     self.df_trans[col] = map(func, self.df[col])
-
-    # def _apply_transfers(self):
-    #     for col in self.selected_transfer_functions.keys():
-    #         func = self.selected_transfer_functions[col]
-    #         if func is not 'None' and func is not None:
-    #             try:
-    #                 if func not in self.default_dtypes.values():
-    #                     self.df_trans[col] = map(self.transfer_functions[self.selected_transfer_functions[col]], self.df[col])
-    #                 else:
-    #                     # self.df_trans[col] = self.df[col].astype(self._type_for_string(func))
-    #                     self.df_trans[col] = map(self._type_for_string(func), self.df[col])
-    #                 self.last_error = ""
-    #             except Exception, e:
-    #                 self.last_error = str(np.random.randint(30)) + str(traceback.format_exc())
-
-
-    # def _type_for_string(self, typestr):
-    #     for key, val in self.default_dtypes.iteritems():
-    #         if val == typestr:
-    #             return key
+    def _generate_code(self):
+        return "print 'Code generation not properly implemented.'"
 
     ## Method called when OK is pressed
     def ok_pressed(self):
 
-        code = """
-        import pandas as pd
-        df =  pd.read_json('""" + self.df.to_json() + """')
-        def _view(dataframe):
-            import traits_enaml
-            with traits_enaml.imports():
-                from misc_views import DialogPopup
-            print 'Launching Enaml UI Builder...'
-            app = application()
-            app.add_plugin(DataFramePlugin(data_frame=dataframe))
-            app.start()
-
-        """
+        code = self._generate_code()
         code_task = self.application.get_task('canopy.integrated_code_editor')
 
         # Make the python pane visible, if it is not
@@ -200,18 +173,3 @@ class DataFrameImportOptions(HasTraits):
 
         # Run the code in the frontend
         code_task.python_pane.frontend.execute_command(code)
-
-        ## Launch UI Builder
-
-        # with traits_enaml.imports():
-        #     from misc_views import DialogPopup
-
-        # dialog = DialogPopup()
-
-        # dialog.show()
-
-        # app = application()
-        # app.add_plugin(DataFramePlugin(data_frame=self.df_trans))
-        # app.start()
-
-        # dialog.close()

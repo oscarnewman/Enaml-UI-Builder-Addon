@@ -2,17 +2,16 @@ from setuptools import find_packages, setup
 
 setup(
     # Description.
-    name             = 'ui_builder_addon',
+    name             = 'import_addon',
     version          = '1.0',
     author           = 'Enthought, Inc',
     author_email     = 'info@enthought.com',
     description      = \
-        "Allows for Canopy to open CSV files with the Enaml UI Builder",
+        "Allows for Canopy to open data files with Canopy.",
 
     package_data={
-        'ui_builder_addon': [
-            'ui/*.enaml',
-            'img/*.png'
+        'import_addon': [
+            'ui/*.enaml'
         ]
     },
 
@@ -22,7 +21,7 @@ setup(
     # # Plugins.
     entry_points = {
         'envisage.plugins': [
-            'builder_addon = ui_builder_addon.plugin:UIBuilderPlugin',
+            'import_addon = import_addon.plugin:ImportPlugin',
         ]
     },
 
