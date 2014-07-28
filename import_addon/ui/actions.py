@@ -1,4 +1,5 @@
 from pkg_resources import resource_filename
+import os.path
 
 import traits_enaml
 from enaml.qt.qt_application import QtApplication
@@ -34,23 +35,25 @@ class OpenTableAction(TaskAction):
             wildcard=self._wildcard_string(), default_directory=directory)
         dialog.title = 'Load Table to UI Builder'
         if dialog.open() == OK:
-            
+            ext = os.path.splitext(dialog.path)[1]
+            self.extension = ext
             service.push_recent_file(dialog.path)
 
-            opts = self._get_model()
+            opts = self._get_model(dialog.path)
             opts.path = dialog.path
             opts.application = app
+            opts.save_dir = app.home
 
             application_manager.create_app()
 
-            view = self._get_enaml_view()
+            view = self._get_enaml_view(dialog.path)
             view.options = opts
             view.show()
 
-    def _get_enaml_view(self):
+    def _get_enaml_view(self, path):
         raise NotImplementedError('Enaml View Not Defined')
 
-    def _get_model(self):
+    def _get_model(self, path):
         raise NotImplementedError('Model Not Defined')
 
     def _wildcard_string(self):
@@ -61,26 +64,38 @@ class OpenTableAction(TaskAction):
         return wildcard[:-1]
 
 
-class OpenCSVAction(OpenTableAction):
-    """ Open a CSV file. """
+class OpenDelimFixedAction(OpenTableAction):
+    """ Open a Delimted or Fixed Width file. """
 
-    file_type_name = "CSV"
+    file_type_name = "All"
     file_types = {
         'All Files(*)': '*',
     }
 
-    name = 'CSV'
+    name = 'Import DataFrame...'
     tooltip = name
-    id = 'OpenCSVAction'
+    id = 'OpenDelimFixedAction'
 
-    def _get_enaml_view(self):
+    xl = ['.xls', '.xlsx']
+
+
+    def _get_enaml_view(self, path):
+        if self.extension.lower() in self.xl:
+            with traits_enaml.imports():
+                from excel_import_view import ExcelImportView
+            return ExcelImportView()
+
         with traits_enaml.imports():
-                from csv_import_view import CSVImportView
-        return CSVImportView()
+                from delim_fixed_import_view import DelimFixedImportView
+        return DelimFixedImportView()
 
-    def _get_model(self):
-        from csv_import_options import CSVImportOptions
-        return CSVImportOptions()
+    def _get_model(self, path):
+        if self.extension.lower() in self.xl:
+            from excel_import_options import ExcelImportOptions
+            return ExcelImportOptions()
+
+        from delim_fixed_import_options import DelimFixedImportOptions
+        return DelimFixedImportOptions()
 
 class OpenFWFAction(OpenTableAction):
     """ Open a Fixed Width file. """
@@ -127,7 +142,7 @@ class OpenExcelAction(OpenTableAction):
 
 
 menu_group_schema = ActionSchema(
-    action_factory=OpenCSVAction,
-    id='OpenCSVAction',
+    action_factory=OpenDelimFixedAction,
+    id='OpenDelimFixedAction',
     name = 'Import Dataframe...'
 )

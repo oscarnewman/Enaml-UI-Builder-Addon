@@ -4,8 +4,10 @@ from enaml.widgets.api import (
 )
 from enaml.stdlib.fields import IntField
 from enaml.layout.api import vbox, hbox, spacer, grid, align
-from enaml.core.api import Conditional, Looper
 from traits_enaml.widgets.data_frame_table import DataFrameTable
+from enaml.core.api import Conditional, Looper
+
+import logging
 
 def convert(value):
     if isinstance(value, str):
@@ -16,42 +18,44 @@ def convert(value):
     else:
         return unicode(value)
 
-enamldef ExcelImportView(Window): windw:
+enamldef DelimFixedImportView(Window): windw:
     attr options
+    title = "Import Delimited File as DataFrame"
     Container:
         constraints = [
             vbox(
                 opts,
                 col_opts_cond,
-                preview,
+                nbook,
                 hbox(
                     spacer,
                     cancelButton,
                     loadButton
                 )
             ),
-            preview.height >= 300, 
+            nbook.height >= 300, 
             opts.height <= 150,
             col_opts_cond.height <= 200,
         ]
+           
+
         GroupBox: opts:
-            title = 'Import Options'
+            title = 'Global Options'
             Container:
                 constraints = [
+
                     hbox(
-                        vbox(
-                            sheet_lbl,
-                            sheet,
-                            spacer
-                        ), 
-                        spacer(200).flex(),
+                        opts_ftype,
+                        spacer(100).flex(),
+                        opts_conditional,
+                        spacer(100).flex(),
                         vbox(
                             header_row_lbl,
                             header_row,
                             has_header_row_cb,
                             spacer
                         ), 
-                        spacer(200).flex(),
+                        spacer(100).flex(),
                         vbox(
                             index_cols_lbl,
                             index_cols,
@@ -60,16 +64,84 @@ enamldef ExcelImportView(Window): windw:
                             spacer
                         )
                     ),
+                    # delims_lbl.width == delims.width,
+                    # header_row_lbl.width == header_row.width,
+                    # has_header_row_cb.width == header_row.width,
+                    # index_cols_lbl.width == index_cols.width,
+                ]  
+                Container: opts_ftype:
+                    constraints = [
+                        vbox(
+                            ftype,
+                            ftype_delim,
+                            ftype_fwf,
+                            spacer
+                        )
+                    ]
+                    Label: ftype:
+                        text = "File Type"
+                    RadioButton: ftype_delim:
+                        text = "Delimited"
+                        checked = True
+                        toggled :: 
+                            if toggled:
+                                options.ftype = 'delimited'
+                    RadioButton: ftype_fwf:
+                        text = "Fixed Width"
+                        toggled :: 
+                            if toggled:
+                                options.ftype = 'fixed'
 
-                    header_row_lbl.width == header_row.width,
-                    has_header_row_cb.width == header_row.width,
-                    index_cols_lbl.width == index_cols.width,
-                ]
-                Label: sheet_lbl:
-                    text = 'Sheet:'
-                ObjectCombo: sheet:
-                    items << options.sheets
-                    selected := options.sheet
+                Container: opts_conditional:
+
+                    Conditional:
+                        condition << options.ftype == 'delimited'
+                        Container: opts_delimited:
+                            padding = 1
+                            #visible << options.ftype == 'delimited'
+                            constraints = [
+                                vbox(
+                                    delims_lbl,
+                                    delims,
+                                    delim_other,
+                                    spacer
+                                ) 
+                            ]
+
+                            Label: delims_lbl:
+                                text = 'Delimiter'
+                            ObjectCombo: delims:
+                                items = options.delims_keys
+                                selected = 'comma'
+                                selected ::
+                                    if selected == 'custom':
+                                        options.delim = delim_other.text
+                                    else:
+                                        options.delim = options.delims_dict[selected]
+                            Field: delim_other:
+                                visible << delims.selected == 'custom'
+                                text >> options.delim
+                                submit_triggers = ['auto_sync', 'lost_focus', 'return_pressed']
+                    Conditional:
+                        condition << options.ftype == 'fixed'
+                        Container: opts_fixed:
+                            padding = 1
+                            #visible << options.ftype == 'fixed'
+                            constraints = [
+                                vbox(
+                                    widths_lbl,
+                                    widths,
+                                    spacer
+                                )
+                            ]
+
+                            Label: widths_lbl:
+                                text = 'Column Widths:'
+                            Field: widths:
+                                placeholder = "ex: 5, 8, 15, 5, 3"
+                                text := options.col_width_sequence
+                                submit_triggers = ['auto_sync', 'lost_focus', 'return_pressed']
+
                 Label: header_row_lbl:
                     text = "Header Row"
                 IntField: header_row:
@@ -89,16 +161,17 @@ enamldef ExcelImportView(Window): windw:
                 Label: index_cols_lbl:
                     text = "Index Column(s)"
                 ObjectCombo: index_cols:
-                    items = ["None"] + map(str, range(options.df.shape[1])) + ["Multi-Index"]
+                    items << ["None"] + map(str, range(options.df_trans.shape[1])) + ["Multi-Index"]
                     selected := options.index_column
                 Field: multi_index_cols:
                     visible << index_cols.selected == 'Multi-Index'
                     placeholder = "Comma Separated" 
                     text := options.index_sequence          
-                    submit_triggers = ['auto_sync', 'lost_focus', 'return_pressed']
+                    submit_triggers = ['auto_sync', 'lost_focus', 'return_pressed'] 
                 CheckBox: dates:
                     text = "Parse Index Columns as Dates"
-                    checked := options.parse_dates 
+                    checked := options.parse_dates
+        
         Container: col_opts_cond:
             padding = 0
 
@@ -159,14 +232,30 @@ enamldef ExcelImportView(Window): windw:
                             options.transfer_handler.set_col_transfer(cols.selected, selected)
                             options._update_dataframe()
 
-        Container: preview:
-            DataFrameTable: table:
-                data_frame << options.df_trans
-                visible << not options.parse_error
-            Label: parse_error:
-                text = "The data could not be parsed with the selected options."
-                visible << options.parse_error
-                            
+        Notebook: nbook:
+            tab_style = 'preferences'
+            tabs_movable = False
+            Page:
+                title = 'Table Preview'
+                closable = False
+                tool_tip = 'Table Preview'
+                Container:
+                    #WebView: table:
+                    #   html << options.html
+                    DataFrameTable: table:
+                        data_frame << options.df_trans
+                        visible << not options.parse_error
+                    Label: parse_error:
+                        text = "The data could not be parsed with the selected options."
+                        visible << options.parse_error
+            Page:
+                title = 'Plain Text'
+                closable = False
+                tool_tip = 'Plain Text'             
+                Container:
+                    MultilineField: plain_text:
+                        read_only = True
+                        text := options.plain_text
 
         PushButton: cancelButton:
             text = "Cancel"
@@ -178,3 +267,4 @@ enamldef ExcelImportView(Window): windw:
             clicked :: 
                 windw.close()
                 options.ok_pressed()
+

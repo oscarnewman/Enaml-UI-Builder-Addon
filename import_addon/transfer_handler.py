@@ -29,6 +29,9 @@ class TransferHandler():
     # path of transfer functions file
     user_transfers_path = os.path.expanduser("~") + '/.canopy/transfers.py'
 
+    # Columns to ignore
+    ignore_columns = {}
+
     # Aliases from normal data types names (Int, String, etc.) to Pandas
     # datatype names (integer, string, etc.)
     name_aliases = {}
@@ -36,10 +39,11 @@ class TransferHandler():
     # Errors for each column
     errors = {}
 
-    def __init__(self, df):
+    def __init__(self, df, path):
         self.dataframe_original = df
         self._load_column_dtypes()
         self._load_transfers()
+        self.user_transfers_path = path + '/transfers.py'
 
     def _load_transfers(self):
         """ Load transfer functions into dictionary from python file or create
@@ -56,8 +60,7 @@ class TransferHandler():
                 lambda x: None if isinstance(x, float) and math.isnan(x) else int(x),
             'Float' : float,
             'String' : str,
-            'Unicode (from utf-8)' : \
-                lambda x: unicode(str(x), 'utf-8') if not isinstance(x, unicode) else x,
+            'Unicode (from utf-8)' : self._convert_to_unicode,
             'Boolean' : np.bool_
         }
 
@@ -99,10 +102,15 @@ class TransferHandler():
 
         self.default_column_dtypes = dict(zip(column_names, inferred_dtypes))
 
+        # Add any new columns
         for col, type_name in self.default_column_dtypes.iteritems():
             if not col in self.column_transfers:
                 self.column_transfers[col] = type_name
+            if not col in self.ignore_columns:
+                self.ignore_columns[col] = False
 
+
+        # Remove old columns
         poplist = []
         for col, type_name in self.column_transfers.iteritems():
             if not col in self.default_column_dtypes:
@@ -111,15 +119,12 @@ class TransferHandler():
         for col in poplist:
             self.column_transfers.pop(col)
 
-        # logging.info("COLUMN_TRANSFERS" + str(self.column_transfers))
-
     def apply_transfers(self):
 
         # Copy orginal dataframe to dataframe to be transferred
         self.dataframe_transferred = self.dataframe_original.copy()
 
         for col, transfer_name in self.column_transfers.iteritems():
-            # logging.info('COL: ' + col + ' TRANSFER: ' + transfer_name)
             # Test if transfer is a default transfer
             if transfer_name in self.default_transfer_functions.keys():
                 # Do nothing if the selected transfer is the default dtype
@@ -134,6 +139,11 @@ class TransferHandler():
                 func = self.user_transfer_functions[transfer_name]
                 self._map_to_col(func, col)
 
+        for col, drop in self.ignore_columns.iteritems():
+            # Test if column should be dropped
+            if drop:
+                self.dataframe_transferred.drop(col, axis=1, inplace=True)
+
         return self.dataframe_transferred
                
     def _map_to_col(self, func, col):
@@ -146,15 +156,13 @@ class TransferHandler():
         except Exception as e:
             logging.error(e)
             if func is float:
-                msg = "Float error reporting is borked, but there's definitely an error here."
+                # Float error cannot be seen due to encoding issues.
+                # Display generic error message. Will still fail on 
+                # custom transfers.
+                msg = "Conversion to float failed."
             else:
                 msg = str(e)
             self.errors[col] = msg
-            #self.errors[col] = traceback.format_exc()
-            # self.errors[col] = str(np.random.randint(30)) + ": Sorry, this function could not be applied."
-            # self.errors[col] = str(sys.exc_info()[1])
-        # except Exception, e:
-        #     self.errors[col] = str(e)
 
     def _is_default_dtype_for_column(self, type_name, column):
         name = type_name
@@ -166,9 +174,13 @@ class TransferHandler():
         return self.default_column_dtypes[column] == name
 
     def get_list_options_for_column(self, column):
+        if column is None:
+            return []
+
         options = []
         if not self.default_column_dtypes[column] in self.name_aliases.values():
-            if not self.default_column_dtypes[column] in self.default_transfer_functions.keys():
+            if not self.default_column_dtypes[column] \
+                in self.default_transfer_functions.keys():
                 options.append(str(self.default_column_dtypes[column]))
 
         options += self.default_transfer_functions.keys()
@@ -177,6 +189,10 @@ class TransferHandler():
         return options 
 
     def transfer_for_col(self, col):
+
+        if col is None:
+            return None
+
         transfer = self.column_transfers[col]
 
         # Set transfer to actual value that pandas sees if it isn't already
@@ -192,8 +208,23 @@ class TransferHandler():
     def update_dataframe(self, df):
         self.dataframe_original = df
         self._load_column_dtypes()
+    
+    def set_ignore_column(self, column, ignore):
+        self.ignore_columns[column] = ignore
+
+    def is_column_ignored(self, column):
+        return self.ignore_columns[column]
 
     def _key_for_val(self, dict, val):
         for key, v in dict.iteritems():
             if v == val:
                 return key
+
+    def _convert_to_unicode(self, value):
+        if isinstance(value, str):
+            try:
+                return unicode(value, encoding='utf-8')
+            except UnicodeDecodeError:
+                return unicode(value, encoding='latin-1')
+        else:
+            return unicode(value)

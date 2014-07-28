@@ -1,6 +1,7 @@
 import re
 import os
 import traceback
+import logging
 
 import enaml
 import traits_enaml
@@ -55,6 +56,10 @@ class DataFrameImportOptions(HasTraits):
     # Application instance used to acces python frontend
     application = Instance('envisage.api.IApplication') 
 
+    # Directory to save transfer file
+    save_dir = Str()
+
+    # Transfer Handler
     transfer_handler = Instance(TransferHandler)
 
     # Currently selected dataframe column
@@ -69,6 +74,7 @@ class DataFrameImportOptions(HasTraits):
     # whether the parser failed
     parse_error = Bool(False)
 
+
     ## Defaults
 
     def _df_default(self):
@@ -78,7 +84,7 @@ class DataFrameImportOptions(HasTraits):
         return self.df.copy()
 
     def _transfer_handler_default(self):
-        return TransferHandler(self.df)
+        return TransferHandler(self.df, self.save_dir)
 
     # Monitor for changes
 
