@@ -16,6 +16,7 @@ class ImportPlugin(Plugin):
 
     # Extension point IDs.
     TASK_EXTENSIONS = 'envisage.ui.tasks.task_extensions'
+    COMMANDS = 'canopy.python_frontend.commands'
 
     # Unique ID for this Plugin.
     id = 'import_addon'
@@ -44,4 +45,3 @@ class ImportPlugin(Plugin):
         )
 
         return [menu_extension]
-

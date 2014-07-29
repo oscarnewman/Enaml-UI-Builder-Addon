@@ -11,6 +11,7 @@ from pyface.api import ConfirmationDialog, FileDialog, \
 from canopy.file_handling.i_file_handling_service import IFileHandlingService
 import table_import
 
+import logging
 
 class OpenTableAction(TaskAction):
 
@@ -21,7 +22,6 @@ class OpenTableAction(TaskAction):
         'All files (*)' : '*'
     }
 
-    file_type_name = "File"
     name = 'Import DataFrame...'
     tooltip = name
     id = 'OpenTableAction'
@@ -33,10 +33,25 @@ class OpenTableAction(TaskAction):
 
         dialog = FileDialog(
             wildcard=self._wildcard_string(), default_directory=directory)
-        dialog.title = 'Load Table to UI Builder'
+        dialog.title = 'Import DataFrame from File'
         if dialog.open() == OK:
             service.push_recent_file(dialog.path)
-            table_import.run(dialog.path, app.home)
+            # table_import.run(dialog.path, app.home)
+            code_task = app.get_task('canopy.integrated_code_editor')
+            code =\
+"""
+def callback(df):
+    # print 'DataFrame saved as `df`'
+    globals()['df'] = df
+"""
+
+            code += "import table_import\n"
+            code += "table_import.run('"+dialog.path+"','"+app.home+"',callback)"
+            code += "\nprint '\\n\\ndataframe will be saved as `df`'" 
+
+            # Run the code in the frontend
+            code_task.python_pane.frontend.execute_command(code)
+
 
     def _wildcard_string(self):
         wildcard = ""
