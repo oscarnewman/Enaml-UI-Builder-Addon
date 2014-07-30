@@ -36,7 +36,6 @@ class OpenTableAction(TaskAction):
         dialog.title = 'Import DataFrame from File'
         if dialog.open() == OK:
             service.push_recent_file(dialog.path)
-            # table_import.run(dialog.path, app.home)
             code_task = app.get_task('canopy.integrated_code_editor')
             code =\
 """
