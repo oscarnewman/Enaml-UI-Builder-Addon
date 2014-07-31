@@ -1,15 +1,10 @@
 """ Allows Canopy to open CSV files in the Enaml UI Builder """
-from pkg_resources import resource_filename
 
-import traits_enaml
 from envisage.api import Plugin
 from envisage.ui.tasks.api import TaskExtension
 from traits.api import List
 from pyface.action.api import Action
 from pyface.tasks.action.api import SchemaAddition
-from enaml_ui_builder import run
-
-from import_addon.ui import application_manager
 
 class ImportPlugin(Plugin):
     """ Allows for Canopy to open CSV files in the Enaml UI Builder """
@@ -45,3 +40,15 @@ class ImportPlugin(Plugin):
         )
 
         return [menu_extension]
+
+    commands = List(contributes_to=COMMANDS)
+
+    def _commands_default(self):
+        code =\
+"""
+import table_import
+def callback(df):
+    globals()['df'] = df
+"""
+        code += "table_import.setup('"+self.home+"',callback)"
+        return [code]

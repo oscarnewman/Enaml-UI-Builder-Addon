@@ -37,16 +37,9 @@ class OpenTableAction(TaskAction):
         if dialog.open() == OK:
             service.push_recent_file(dialog.path)
             code_task = app.get_task('canopy.integrated_code_editor')
-            code =\
-"""
-def callback(df):
-    # print 'DataFrame saved as `df`'
-    globals()['df'] = df
-"""
 
-            code += "import table_import\n"
-            code += "table_import.run('"+dialog.path+"','"+app.home+"',callback)"
-            code += "\nprint '\\n\\ndataframe will be saved as `df`'" 
+            code = "table_import.run('"+dialog.path+"')"
+            code += "\nprint '\\n\\ndataframe will be saved as `df`'"
 
             # Run the code in the frontend
             code_task.python_pane.frontend.execute_command(code)
